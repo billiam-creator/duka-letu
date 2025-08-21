@@ -1,8 +1,8 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/providers/auth_provider.dart';
 import 'package:duka_letu/screens/main_screen.dart';
+import 'package:duka_letu/screens/password_reset_screen.dart'; // New Import
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -104,9 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _forgotPassword() {
-    // You can implement password reset functionality here
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password reset functionality coming soon!')),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const PasswordResetScreen()),
     );
   }
 
@@ -122,7 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Title and subtitle
                 Text(
                   _isLogin ? 'Welcome Back!' : 'Create an Account',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -138,7 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Username field for sign-up
                 if (!_isLogin)
                   TextFormField(
                     controller: _usernameController,
@@ -156,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 if (!_isLogin) const SizedBox(height: 16),
 
-                // Email field
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -174,7 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password field
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
@@ -192,7 +187,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Forgot password link
                 if (_isLogin)
                   Align(
                     alignment: Alignment.centerRight,
@@ -203,7 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 const SizedBox(height: 24),
 
-                // Main login/signup button
                 if (_isLoading)
                   const Center(child: CircularProgressIndicator()),
                 if (!_isLoading)
@@ -222,7 +215,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 const SizedBox(height: 16),
                 
-                // OR divider
                 const Row(
                   children: [
                     Expanded(child: Divider()),
@@ -235,7 +227,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Continue with Google button
                 ElevatedButton.icon(
                   onPressed: _signInWithGoogle,
                   icon: const FaIcon(FontAwesomeIcons.google, size: 20),
@@ -249,13 +240,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Continue as Guest button
                 TextButton(
                   onPressed: _continueAsGuest,
                   child: const Text('Continue as Guest'),
                 ),
 
-                // Toggle login/signup
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
