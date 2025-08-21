@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "105587401",
+    "project_id": "duka-letu-01-61a86",
+    "storage_bucket": "duka-letu-01-61a86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105587401:android:a31dec1902d232787d2318",
+        "android_client_info": {
+          "package_name": "com.example.duka_letu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX2K5jDNAUysAPxdVM35KiaMNzudeDp_g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
