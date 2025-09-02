@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'firebase_options.dart';
 import 'package:duka_letu/providers/theme_provider.dart';
 import 'package:duka_letu/providers/cart_provider.dart';
 import 'package:duka_letu/providers/auth_provider.dart' as custom_auth;
 import 'package:duka_letu/screens/main_screen.dart';
 import 'package:duka_letu/screens/login_screen.dart';
 import 'package:duka_letu/screens/welcome_screen.dart';
+import 'package:duka_letu/screens/admin_dashboard_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  final prefs = await SharedPreferences.getInstance();
-  final hasSeenWelcome = prefs.getBool('hasSeenWelcome') ?? false;
+  await Firebase.initializeApp();
 
   runApp(
     MultiProvider(
@@ -27,14 +20,13 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => custom_auth.AuthProvider()),
       ],
-      child: MyApp(hasSeenWelcome: hasSeenWelcome),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final bool hasSeenWelcome;
-  const MyApp({super.key, required this.hasSeenWelcome});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -44,25 +36,31 @@ class MyApp extends StatelessWidget {
       title: 'Duka Letu',
       debugShowCheckedModeBanner: false,
       theme: themeProvider.themeData,
-      home: hasSeenWelcome ? _getAuthScreen() : const WelcomeScreen(),
+      home: const WelcomeScreen(),
       routes: {
         '/main': (context) => const MainScreen(),
         '/login': (context) => const LoginScreen(),
+        '/admin-dashboard': (context) => const AdminDashboardScreen(),
       },
-    );
-  }
-
-  Widget _getAuthScreen() {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        }
-        if (snapshot.hasData) {
-          return const MainScreen();
-        }
-        return const LoginScreen();
+      builder: (context, child) {
+        return Consumer<custom_auth.AuthProvider>(
+          builder: (context, authProvider, _) {
+            if (authProvider.isLoading) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (authProvider.user != null) {
+              if (authProvider.userRole == 'admin') {
+                return const AdminDashboardScreen();
+              }
+              return const MainScreen();
+            }
+            return const LoginScreen();
+          },
+        );
       },
     );
   }

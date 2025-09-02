@@ -1,43 +1,17 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import 'package:duka_letu/models/product.dart';
-import 'package:duka_letu/providers/cart_provider.dart';
-import 'package:duka_letu/providers/theme_provider.dart';
-import 'package:duka_letu/widgets/product_card.dart';
-import 'package:duka_letu/widgets/product_slideshow.dart';
+// lib/screens/home_screen.dart
 
-class HomeScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:duka_letu/providers/cart_provider.dart';
+import 'package:duka_letu/widgets/product_card.dart';
+import 'package:duka_letu/models/product.dart'; // Import the correct Product model
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final cartProvider = Provider.of<CartProvider>(context);
 
     return Scaffold(
@@ -45,22 +19,23 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Duka Letu'),
         actions: [
           IconButton(
-            icon: Icon(
-              themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-            ),
+            icon: const Icon(Icons.shopping_cart),
             onPressed: () {
-              themeProvider.toggleTheme();
+              Navigator.of(context).pushNamed('/cart');
             },
           ),
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/cart');
+                },
               ),
-              if (cartProvider.items.isNotEmpty)
+              if (cartProvider.items.isNotEmpty) // Use `items` getter
                 Positioned(
-                  right: 0,
+                  right: 8,
+                  top: 8,
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
@@ -72,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       minHeight: 16,
                     ),
                     child: Text(
-                      '${cartProvider.items.length}',
+                      '${cartProvider.itemCount}', // Use `itemCount` getter
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -92,70 +67,34 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong'));
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
-  
-          final List<Product> products = snapshot.data!.docs.map((doc) {
-            return Product.fromFirestore(
-              doc.data() as Map<String, dynamic>..['id'] = doc.id,
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No products available.'));
+          }
+
+          final products = snapshot.data!.docs.map((doc) {
+            return Product(
+              id: doc.id,
+              name: doc['name'],
+              price: doc['price'].toDouble(),
+              imageUrl: doc['imageUrl'],
+              category: doc['category'],
             );
           }).toList();
-  
-          final filteredProducts = products.where((product) {
-            return product.name
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase());
-          }).toList();
-  
-          final random = Random();
-          final int numberOfSlides = products.length > 5 ? 5 : products.length;
-          final Set<Product> uniqueSlides = {};
-          while (uniqueSlides.length < numberOfSlides) {
-            if (products.isNotEmpty) {
-              uniqueSlides.add(products[random.nextInt(products.length)]);
-            } else {
-              break;
-            }
-          }
-          final List<Product> slideshowProducts = uniqueSlides.toList();
-  
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search for products...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(context).cardColor,
-                  ),
-                ),
-              ),
-              if (slideshowProducts.isNotEmpty)
-                ProductSlideshow(products: slideshowProducts),
-              
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(10.0),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.75,
-                  ),
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-                    return ProductCard(product: product);
-                  },
-                ),
-              ),
-            ],
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(8.0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+              childAspectRatio: 0.7,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              return ProductCard(product: products[index]);
+            },
           );
         },
       ),

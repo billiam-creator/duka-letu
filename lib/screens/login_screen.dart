@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/providers/auth_provider.dart';
 import 'package:duka_letu/screens/main_screen.dart';
-import 'package:duka_letu/screens/password_reset_screen.dart'; // New Import
+import 'package:duka_letu/screens/password_reset_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatefulWidget {
