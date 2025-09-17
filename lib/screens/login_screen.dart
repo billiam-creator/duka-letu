@@ -1,3 +1,5 @@
+// lib/screens/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/providers/auth_provider.dart';
@@ -52,6 +54,8 @@ class _LoginScreenState extends State<LoginScreen> {
           _usernameController.text.trim(),
         );
       }
+      
+      if (!mounted) return;
 
       setState(() {
         _isLoading = false;
@@ -78,6 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     String? errorMessage = await authProvider.signInWithGoogle();
+    
+    if (!mounted) return;
 
     setState(() {
       _isLoading = false;
@@ -183,8 +189,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       return 'Password must be at least 6 characters long.';
                     }
                     return null;
-                  },
-                ),
+                    },
+                  ),
                 const SizedBox(height: 8),
 
                 if (_isLogin)

@@ -7,7 +7,6 @@ import 'package:duka_letu/models/cart_item.dart';
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
 
-  // All these getters and methods are required
   List<CartItem> get cartItems => _items.values.toList();
   int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
   double get totalPrice => _items.values.fold(0.0, (sum, item) => sum + item.totalPrice);
@@ -31,8 +30,8 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeFromCart(CartItem item) {
-    _items.remove(item.product.id);
+  void removeItem(String productId) {
+    _items.remove(productId);
     notifyListeners();
   }
 

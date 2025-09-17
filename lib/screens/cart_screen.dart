@@ -1,3 +1,5 @@
+// lib/screens/cart_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/providers/cart_provider.dart';
@@ -9,107 +11,101 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cartProvider = Provider.of<CartProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final cartProvider = Provider.of<CartProvider>(context);
 
+    if (authProvider.user == null) {
+      // If no user is logged in, redirect to login screen
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Cart'),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Please log in to view your cart.'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                },
+                child: const Text('Log In'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // If a user is logged in, display their cart
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Cart'),
+        title: const Text('Your Cart'),
       ),
       body: cartProvider.cartItems.isEmpty
           ? const Center(
-              child: Text(
-                'Your cart is empty.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
+              child: Text('Your cart is empty!'),
             )
-          : ListView.builder(
-              itemCount: cartProvider.cartItems.length,
-              itemBuilder: (context, index) {
-                final item = cartProvider.cartItems[index];
-                return ListTile(
-                  leading: Image.asset(item.imageUrl, width: 50, height: 50, fit: BoxFit.cover),
-                  title: Text(item.name),
-                  subtitle: Text('\$${item.price.toStringAsFixed(2)}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: () {
-                          cartProvider.decreaseQuantity(item);
-                        },
-                      ),
-                      Text(item.quantity.toString()),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () {
-                          cartProvider.increaseQuantity(item);
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          cartProvider.removeFromCart(item);
-                        },
-                      ),
-                    ],
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: cartProvider.cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = cartProvider.cartItems[index];
+                      return ListTile(
+                        leading: Image.network(item.product.imageUrl),
+                        title: Text(item.product.name),
+                        subtitle: Text('\$${item.product.price.toStringAsFixed(2)} x ${item.quantity}'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            cartProvider.removeItem(item.product.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Item removed from cart')),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: () {
-            if (authProvider.isAuthenticated) {
-              // User is logged in, proceed to checkout
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Proceeding to checkout...'),
                 ),
-              );
-              // You can add navigation to a checkout page here.
-            } else {
-              // User is a guest, prompt to log in
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Log In Required'),
-                  content: const Text('You must be logged in to proceed to checkout. Would you like to log in or sign up now?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: const Text('Log In'),
+                Card(
+                  margin: const EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total:',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '\$${cartProvider.totalPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                  ],
+                  ),
                 ),
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Navigate to checkout screen or implement checkout logic
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text('Checkout'),
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: Text(
-            'Checkout (${cartProvider.cartItems.length}) - \$${cartProvider.totalPrice.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
     );
   }
 }
