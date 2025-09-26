@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ThemeProvider with ChangeNotifier {
   ThemeData _themeData = ThemeData.light();
-  ThemeData get themeData => _themeData;
+  ThemeData get currentTheme => _themeData;
 
   bool get isDarkMode => _themeData.brightness == Brightness.dark;
 

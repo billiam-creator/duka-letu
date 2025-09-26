@@ -1,18 +1,27 @@
-// lib/providers/cart_provider.dart
-
 import 'package:flutter/material.dart';
 import 'package:duka_letu/models/product.dart';
-import 'package:duka_letu/models/cart_item.dart';
+
+class CartItem {
+  final Product product;
+  int quantity;
+
+  CartItem({required this.product, this.quantity = 1});
+}
 
 class CartProvider with ChangeNotifier {
+  // CRITICAL: The internal data structure is named '_items'
   final Map<String, CartItem> _items = {};
 
-  List<CartItem> get cartItems => _items.values.toList();
-  int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
-  double get totalPrice => _items.values.fold(0.0, (sum, item) => sum + item.totalPrice);
-  Map<String, CartItem> get items => _items;
+  // CRITICAL: The public getter is named 'items' (NOT 'cartItems')
+  Map<String, CartItem> get items => _items; 
 
-  void addToCart(Product product) {
+  int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
+
+  double get totalPrice {
+    return _items.values.fold(0.0, (sum, item) => sum + (item.product.price * item.quantity));
+  }
+
+  void addItem(Product product) {
     if (_items.containsKey(product.id)) {
       _items.update(
         product.id,
@@ -35,28 +44,20 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void increaseQuantity(CartItem item) {
-    _items.update(
-      item.product.id,
-      (existingItem) => CartItem(
-        product: existingItem.product,
-        quantity: existingItem.quantity + 1,
-      ),
-    );
-    notifyListeners();
-  }
-
-  void decreaseQuantity(CartItem item) {
-    if (item.quantity > 1) {
+  void removeSingleItem(String productId) {
+    if (!_items.containsKey(productId)) {
+      return;
+    }
+    if (_items[productId]!.quantity > 1) {
       _items.update(
-        item.product.id,
+        productId,
         (existingItem) => CartItem(
           product: existingItem.product,
           quantity: existingItem.quantity - 1,
         ),
       );
     } else {
-      _items.remove(item.product.id);
+      _items.remove(productId);
     }
     notifyListeners();
   }
