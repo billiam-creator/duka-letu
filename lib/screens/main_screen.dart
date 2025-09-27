@@ -4,9 +4,11 @@ import 'package:duka_letu/screens/cart_screen.dart';
 import 'package:duka_letu/screens/profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/providers/cart_provider.dart';
+import 'package:duka_letu/providers/theme_provider.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+  static const routeName = '/main';
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -30,12 +32,20 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
     return Scaffold(
-      // The current screen widget is displayed here
+      appBar: AppBar(
+        title: const Text("Duka Letu"),
+        actions: [
+          IconButton(
+            icon: Icon(themeProvider.isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => themeProvider.toggleTheme(),
+            tooltip: "Toggle Theme",
+          ),
+        ],
+      ),
       body: _screens[_selectedIndex],
-      
-      // CRITICAL: The Bottom Navigation Bar for the user view
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -50,7 +60,6 @@ class _MainScreenState extends State<MainScreen> {
             icon: Stack(
               children: [
                 const Icon(Icons.shopping_cart),
-                // Display cart count badge
                 if (cartProvider.itemCount > 0)
                   Positioned(
                     right: 0,

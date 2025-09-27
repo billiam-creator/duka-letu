@@ -5,6 +5,7 @@ import 'package:duka_letu/providers/cart_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
+  static const routeName = '/checkout';
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -23,22 +24,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _processPayment() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final mpesaProvider = Provider.of<MpesaProvider>(context, listen: false);
-    
     final totalAmount = cartProvider.totalPrice;
-    final phoneNumber = _phoneController.text;
+    final phoneNumber = _phoneController.text.trim();
 
     try {
-      // FIX: SWAPPED ARGUMENTS TO (double amount, String phoneNumber)
+      // ✅ Correct argument order: (amount, phoneNumber)
       await mpesaProvider.initiateStkPush(totalAmount, phoneNumber);
-      
-      cartProvider.clearCart(); 
+      cartProvider.clearCart();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,12 +76,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Order Total: \$${cartProvider.totalPrice.toStringAsFixed(2)}',
+                'Order Total: Ksh ${cartProvider.totalPrice.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -99,7 +97,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 },
               ),
               const SizedBox(height: 30),
-              
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
