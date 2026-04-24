@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:duka_letu/models/product.dart';
 import 'package:duka_letu/providers/cart_provider.dart';
-// Note: You must also ensure product.dart has the 'category' field for this to filter correctly
+import 'package:duka_letu/screens/product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,181 +13,298 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> categories = ['All', 'Electronics', 'Apparel', 'Home & Kitchen', 'Books'];
+  final List<String> categories = [
+    'All', 'Electronics', 'Apparel', 'Home & Kitchen', 'Books', 'Sports', 'Beauty',
+  ];
   String _selectedCategory = 'All';
-  String _searchQuery = ''; // State for the search query
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
-  // Dummy widget for a product tile - replace with your actual widget later
-  Widget _buildProductTile(BuildContext context, Product product) {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildProductCard(BuildContext context, Product product) {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    return Card(
-      elevation: 3,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Center(
-              child: Image.network(
-                product.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported, size: 50),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed(ProductDetailScreen.routeName, arguments: product);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: SizedBox.expand(
+                  child: Image.network(
+                    product.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: colorScheme.surfaceContainerHighest,
+                      child: Icon(Icons.image_not_supported,
+                          size: 40, color: colorScheme.onSurface.withOpacity(0.3)),
+                    ),
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : Container(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.primary.withOpacity(0.5),
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '\$${product.price.toStringAsFixed(2)}',
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (product.category.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          product.category,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'KES ${product.price.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            cartProvider.addItem(product);
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} added to cart!'),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.add, size: 16, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add_shopping_cart, size: 20),
-                  onPressed: () {
-                    cartProvider.addItem(product);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${product.name} added to cart!')),
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Duka Letu'),
-        // NOTE: The Cart icon is now in the MainScreen's BottomNavigationBar, so no need here.
-        automaticallyImplyLeading: false, 
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56.0),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+      backgroundColor: colorScheme.surfaceContainerLowest,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Search products...',
+                  prefixIcon: Icon(Icons.search, color: colorScheme.onSurface.withOpacity(0.5)),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
             ),
           ),
-        ),
-      ),
-      
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Horizontal Category List
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = category == _selectedCategory;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(category),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category;
-                      });
-                    },
-                    selectedColor: Theme.of(context).colorScheme.primary,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final isSelected = cat == _selectedCategory;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(cat,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 13,
+                          )),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => _selectedCategory = cat),
+                      selectedColor: colorScheme.primary,
+                      checkmarkColor: Colors.white,
+                      labelStyle: TextStyle(color: isSelected ? Colors.white : null),
+                      side: BorderSide(
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.outline.withOpacity(0.3),
+                      ),
+                      backgroundColor: colorScheme.surface,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('products').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasError) {
+                return SliverFillRemaining(
+                    child: Center(child: Text('Error: ${snapshot.error}')));
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              if (docs.isEmpty) {
+                return const SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.storefront_outlined, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text('No products yet.\nAdmin can add products from the dashboard.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey)),
+                      ],
                     ),
                   ),
                 );
-              },
-            ),
-          ),
-          const SizedBox(height: 10),
+              }
 
-          // 2. Product Grid (Filtered)
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('products').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No products found. (Add them via Admin Dashboard)'));
-                }
+              final allProducts = docs
+                  .map((doc) => Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+                  .toList();
 
-                // Map, Filter, and Search Products
-                final allProducts = snapshot.data!.docs.map((doc) {
-                  // Ensure Product.fromFirestore handles all fields, including 'category'
-                  return Product.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-                }).toList();
+              final filtered = allProducts.where((p) {
+                final catMatch = _selectedCategory == 'All' || p.category == _selectedCategory;
+                final searchMatch = _searchQuery.isEmpty ||
+                    p.name.toLowerCase().contains(_searchQuery) ||
+                    p.description.toLowerCase().contains(_searchQuery);
+                return catMatch && searchMatch;
+              }).toList();
 
-                final filteredProducts = allProducts.where((product) {
-                  // Category Filter
-                  final categoryMatch = (_selectedCategory == 'All') || (product.category == _selectedCategory);
-                  
-                  // Search Filter
-                  final searchMatch = _searchQuery.isEmpty || 
-                                      product.name.toLowerCase().contains(_searchQuery) ||
-                                      product.description.toLowerCase().contains(_searchQuery);
+              if (filtered.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 48,
+                            color: colorScheme.onSurface.withOpacity(0.3)),
+                        const SizedBox(height: 12),
+                        Text('No products match your search.',
+                            style: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.5))),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
-                  return categoryMatch && searchMatch;
-                }).toList();
-
-
-                if (filteredProducts.isEmpty) {
-                  return const Center(child: Text('No products match your criteria.'));
-                }
-
-                return GridView.builder(
-                  padding: const EdgeInsets.all(10),
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (ctx, i) => _buildProductCard(ctx, filtered[i]),
+                    childCount: filtered.length,
+                  ),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.7, // Adjust ratio to fit card content
+                    childAspectRatio: 0.68,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    return _buildProductTile(context, filteredProducts[index]);
-                  },
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),

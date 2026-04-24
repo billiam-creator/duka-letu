@@ -6,7 +6,7 @@ import '../screens/product_detail_screen.dart';
 
 class ProductGridItem extends StatelessWidget {
   const ProductGridItem({super.key});
-
+-
   @override
   Widget build(BuildContext context) {
     // We can use a different provider here if you have one specifically for a single product.
