@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class MpesaService {
   // ✅ Update this to your current ngrok URL when running locally
-  static const String baseUrl = "https://your-ngrok-url.ngrok-free.app";
+  static const String baseUrl = "https://0f34-41-90-209-122.ngrok-free.app";
 
   /// Normalize any valid Kenyan phone number to 2547XXXXXXXX or 2541XXXXXXXX
   static String normalizePhone(String raw) {
